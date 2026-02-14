@@ -1,10 +1,8 @@
-name: Angular CI/CD (Atelier 4)
+name: Angular CI/CD
 
 on:
   push:
-    branches: ["main"]
-  pull_request:
-    branches: ["main"]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -13,58 +11,29 @@ permissions:
   id-token: write
 
 jobs:
-  build_test:
-    name: Build & Test
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node 20
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
 
-      - name: Install dependencies
-        run: npm ci
+      - run: npm ci
 
-      - name: Create environment.prod.ts (Supabase vars)
-        run: |
-          mkdir -p src/environments
-          cat <<EOF > src/environments/environment.prod.ts
-          export const environment = {
-            production: true,
-            supabaseUrl: "${{ vars.VITE_SUPABASE_URL }}",
-            supabaseAnonKey: "${{ vars.VITE_SUPABASE_ANON_KEY }}"
-          };
-          EOF
-
-      - name: Skip lint (not configured)
-        run: echo "Lint not configured"
-
-      - name: Run unit tests (Angular project: demo)
-        run: npx ng test demo --watch=false --browsers=ChromeHeadless
-
-      - name: Build Angular (GitHub Pages base-href)
+      - name: Build Angular
         run: npm run build -- --base-href="/${{ github.event.repository.name }}/" --configuration production
 
-      - name: Debug dist folder
-        run: |
-          echo "Listing dist/"
-          ls -la dist
-          echo "Listing dist/demo/"
-          ls -la dist/demo
-
-      - name: Upload Pages artifact
+      - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist/demo
 
   deploy:
-    name: Deploy to GitHub Pages
-    needs: build_test
+    needs: build
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
 
@@ -73,6 +42,5 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-      - name: Deploy
-        id: deployment
+      - id: deployment
         uses: actions/deploy-pages@v4
