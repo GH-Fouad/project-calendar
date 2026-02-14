@@ -1,5 +1,4 @@
 name: Angular CI/CD (Atelier 4)
-# trigger
 
 on:
   push:
@@ -47,7 +46,6 @@ jobs:
 
       - name: Run unit tests (Angular project: demo)
         run: npx ng test demo --watch=false --browsers=ChromeHeadless
-
 
       - name: Build Angular (GitHub Pages base-href)
         run: npm run build -- --base-href="/${{ github.event.repository.name }}/" --configuration production
